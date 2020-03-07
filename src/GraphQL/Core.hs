@@ -1,31 +1,11 @@
 {-# LANGUAGE GADTs #-}
-
 module GraphQL.Core
-    ( SchemaType(..)
-    , Field(..)
+    ( runQuery
     , Query(..)
-    , runQuery
     ) where
 
 import Data.List (intercalate)
-
-data SchemaType a where
-    ObjectType :: String -> [Field a] -> SchemaType a
-    StringType :: SchemaType String
-    IntType :: SchemaType Int
-    FloatType :: SchemaType Float
-    IDType :: SchemaType String
-    ListType :: SchemaType a -> SchemaType [a]
-
-data Field a where
-    Field :: String -> SchemaType b -> (a -> IO b) -> Field a
-
-fields :: SchemaType a -> [Field a]
-fields (ObjectType _ fs) = fs
-fields _ = []
-
-fieldName :: Field a -> String
-fieldName (Field name _ _) = name
+import GraphQL.Schema
 
 data FieldValue =
       ObjectValue [(String, FieldValue)]
@@ -34,8 +14,11 @@ data FieldValue =
     | FloatValue Float
     | IDValue String
     | ListValue [FieldValue]
+    | MaybeValue (Maybe FieldValue)
 
 instance Show FieldValue where
+    show (MaybeValue Nothing) = "null"
+    show (MaybeValue (Just innerVal)) = show innerVal
     show (StringValue s) = "\"" ++ s ++ "\""
     show (IntValue i) = show i
     show (FloatValue f) = show f
@@ -49,44 +32,63 @@ instance Show FieldValue where
                 in
                     intercalate ", " kvs
 
-data Query = Query String [Query]
+data Query = Query String (Maybe String) [Query] deriving (Show, Eq)
+
+fields :: SchemaType a -> [Field a]
+fields (ObjectType _ _ fs) = fs
+fields _ = []
+
+fieldName :: Field a -> String
+fieldName (Field name _ _) = name
 
 getQueryField :: Query -> String
-getQueryField (Query name _) = name
+getQueryField (Query name _ _) = name
 
-mapValue :: SchemaType a -> a -> FieldValue
-mapValue StringType = StringValue
-mapValue IntType = IntValue
-mapValue FloatType = FloatValue
-mapValue IDType = IDValue
-mapValue _ = undefined
+getQueryName :: Query -> String
+getQueryName (Query _ (Just alias) _) = alias
+getQueryName (Query name Nothing _) = name
 
 getValue :: SchemaType a -> [Query] -> IO a -> IO FieldValue
-getValue StringType _ = fmap StringValue
-getValue IntType _    = fmap IntValue
-getValue FloatType _  = fmap FloatValue
-getValue IDType _     = fmap IDValue
-getValue (ListType (ObjectType _ fields)) queries =
-    (>>= (runListFields fields queries))
-getValue (ListType innerType) _ =
-    (>>= (\xs -> return $ ListValue (map (mapValue innerType) xs)))
-getValue (ObjectType _ fields) queries =
-    (>>= (runObjectFields fields queries))
+getValue StringType _   = fmap StringValue
+getValue IntType _      = fmap IntValue
+getValue FloatType _    = fmap FloatValue
+getValue IDType _       = fmap IDValue
+getValue (EnumType _ _) _ = fmap (StringValue . show)
+getValue (NullableType innerType) queries =
+    (>>= (getMaybeValue innerType queries))
+getValue (ListType (NullableType innerType)) queries =
+    (>>= (\xs -> fmap ListValue (sequence $ map (getMaybeValue innerType queries) xs)))
+getValue (ListType (ObjectType _ interfaces fields)) queries =
+    (>>= (runListFields interfaces fields queries))
+getValue (ListType innerType) queries =
+    (>>= (\xs -> fmap ListValue (sequence $ map (getValue innerType queries) (map return xs))))
+getValue (ObjectType _ interfaces fields) queries =
+    (>>= (runObjectFields interfaces fields queries))
+getValue (InterfaceType (Interface _ fields)) queries =
+    (>>= (runObjectFields [] fields queries))
+
+getMaybeValue :: SchemaType a -> [Query] -> Maybe a -> IO FieldValue
+getMaybeValue _ _ Nothing = return $ MaybeValue Nothing
+getMaybeValue (ObjectType _ interfaces fields) queries (Just ctx) =
+    fmap (MaybeValue . Just) (runObjectFields interfaces fields queries ctx)
+getMaybeValue schemaType queries (Just ctx) =
+    fmap (MaybeValue . Just) (getValue schemaType queries (return ctx))
 
 runField :: Field a -> [Query] -> a -> IO FieldValue
 runField (Field _ fieldType fn) queries ctx = getValue fieldType queries (fn ctx)
 
-runObjectFields :: [Field a] -> [Query] -> a -> IO FieldValue
-runObjectFields fields queries ctx = do
-    let fieldQueries = [ (f, q) | f <- fields, q <- queries, (fieldName f) == (getQueryField q) ]
-    let fieldNames = map (fieldName . fst) fieldQueries
-    fieldValues <- sequence $ map (\(f, (Query _ qs)) -> runField f qs ctx) fieldQueries
+runObjectFields :: [Interface a] -> [Field a] -> [Query] -> a -> IO FieldValue
+runObjectFields interfaces fields queries ctx = do
+    let allFields = fields ++ (concat $ map (\(Interface _ fs) -> fs) interfaces)
+    let fieldQueries = [ (f, q) | f <- allFields, q <- queries, (fieldName f) == (getQueryField q) ]
+    let fieldNames = map (getQueryName . snd) fieldQueries
+    fieldValues <- sequence $ map (\(f, (Query _ _ qs)) -> runField f qs ctx) fieldQueries
     return $ ObjectValue (zip fieldNames fieldValues)
 
-runListFields :: [Field a] -> [Query] -> [a] -> IO FieldValue
-runListFields fields queries ctxs = do
-    values <- sequence $ map (runObjectFields fields queries) ctxs
+runListFields :: [Interface a] -> [Field a] -> [Query] -> [a] -> IO FieldValue
+runListFields interfaces fields queries ctxs = do
+    values <- sequence $ map (runObjectFields interfaces fields queries) ctxs
     return $ ListValue values
 
 runQuery :: SchemaType a -> [Query] -> a -> IO FieldValue
-runQuery queryType queries ctx = runObjectFields (fields queryType) queries ctx
+runQuery queryType queries ctx = runObjectFields [] (fields queryType) queries ctx
