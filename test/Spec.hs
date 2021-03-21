@@ -1,8 +1,12 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 import           Test.HUnit
 import           Test.HUnit.Base
+import           Text.RawString.QQ
 
 import           GraphQL.Core
 import           GraphQL.Parser
+import           GraphQL.Parser.Internal
 
 parserTestCases :: [(String, String, ParseResult [Query])]
 parserTestCases =
@@ -32,14 +36,33 @@ parserTestCases =
   , ( "Early End of Input"
     , "{ field1 field2"
     , Left
-        "1:16:\n  |\n1 | { field1 field2\n  |                ^\nunexpected end of input\nexpecting ',', '{', '}', alphanumeric character, or white space\n")
+        [r|1:16:
+  |
+1 | { field1 field2
+  |                ^
+unexpected end of input
+expecting ',', '{', '}', alphanumeric character, or white space
+|])
   , ( "Bad Start"
     , "nope"
-    , Left "1:1:\n  |\n1 | nope\n  | ^\nunexpected 'n'\nexpecting '{'\n")
+    , Left
+        [r|1:1:
+  |
+1 | nope
+  | ^
+unexpected 'n'
+expecting '{'
+|])
   , ( "Empty String"
     , ""
     , Left
-        "1:1:\n  |\n1 | <empty line>\n  | ^\nunexpected end of input\nexpecting '{'\n")
+        [r|1:1:
+  |
+1 | <empty line>
+  | ^
+unexpected end of input
+expecting '{'
+|])
   ]
 
 parserTest :: (String, String, ParseResult [Query]) -> Test

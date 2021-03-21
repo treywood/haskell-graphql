@@ -53,6 +53,15 @@ instance Show (SchemaType a) where
            (\(Field name fieldType _) -> name ++ ": " ++ (typeName fieldType))
            fields) ++
         "\n}"
+  show (InterfaceType (Interface name fields)) =
+    "interface " ++
+    name ++
+    " {\n  " ++
+    (intercalate "\n  " $
+     map
+       (\(Field name fieldType _) -> name ++ ": " ++ (typeName fieldType))
+       fields) ++
+    "\n}"
   show schemaType = typeName schemaType
 
 typeName :: SchemaType a -> String
@@ -76,12 +85,24 @@ requiredName string = string ++ "!"
 printSchema :: (SchemaType a) -> String
 printSchema schema = (intercalate "\n\n" allTypeStrings) ++ "\n"
   where
+    allTypeStrings :: [String]
     allTypeStrings =
       (reverse . unique) $ map show (findTypes (TypeBox schema) [] [])
+    findTypes :: TypeBox -> [TypeBox] -> [String] -> [TypeBox]
     findTypes schema types typeNames =
       case schema of
-        TypeBox (ObjectType name _ fields) ->
-          if (elem name typeNames)
+        TypeBox (ObjectType name interfaces fields) ->
+          if name `elem` typeNames
+            then types
+            else schema :
+                 (concat $
+                  map
+                    (\(Field _ fieldType _) ->
+                       findTypes (TypeBox fieldType) [] (name : typeNames))
+                    fields) ++
+                 (map (TypeBox . InterfaceType) interfaces)
+        TypeBox (InterfaceType (Interface name fields)) ->
+          if name `elem` typeNames
             then types
             else schema :
                  (concat $
