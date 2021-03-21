@@ -1,6 +1,7 @@
 module Main where
 
 import           Control.Monad  (forever)
+
 import           GraphQL.Core   (runQuery)
 import           GraphQL.Parser (parseQuery)
 import           GraphQL.Schema (Field (..), Interface (..), SchemaType (..),
@@ -122,4 +123,4 @@ main = do
         result <- runQuery queryType query ()
         putStrLn $ "Result: " ++ (show result)
         putStrLn ""
-      Left err -> putStrLn $ "ERROR: " ++ err
+      Left err -> putStrLn err
