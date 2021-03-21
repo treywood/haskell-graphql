@@ -1,5 +1,6 @@
 .idea/
 .stack-work/
+.vscode/
 node_modules/
 haskell-graphql.cabal
 *~
