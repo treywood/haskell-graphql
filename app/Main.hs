@@ -1,16 +1,12 @@
 module Main where
 
-import Control.Monad (forever)
-import GraphQL.Core (runQuery)
-import GraphQL.Parser (parseQuery)
-import GraphQL.Schema
-  ( Field (..),
-    Interface (..),
-    SchemaType (..),
-    printSchema,
-  )
-import System.IO
-import System.Random
+import           Control.Monad  (forever)
+import           GraphQL.Core   (runQuery)
+import           GraphQL.Parser (parseQuery)
+import           GraphQL.Schema (Field (..), Interface (..), SchemaType (..),
+                                 printSchema)
+import           System.IO
+import           System.Random
 
 data Gender
   = MALE
@@ -18,8 +14,8 @@ data Gender
   deriving (Eq, Show)
 
 data Person = Person
-  { name :: String,
-    age :: Int,
+  { name   :: String,
+    age    :: Int,
     gender :: Gender,
     spouse :: Maybe Person
   }
@@ -49,7 +45,7 @@ instance Named Pet where
 
 instance Named NamedType where
   getName (NamedPerson p) = getName p
-  getName (NamedPet p) = getName p
+  getName (NamedPet p)    = getName p
 
 namedInterface :: (Named a) => Interface a
 namedInterface = Interface "Named" [Field "name" StringType (return . getName)]
@@ -63,9 +59,9 @@ personType =
   ObjectType
     "Person"
     [namedInterface]
-    [ Field "age" IntType (return . age),
-      Field "gender" genderType (return . gender),
-      Field "spouse" (NullableType personType) (return . spouse)
+    [ Field "age" IntType (return . age)
+    , Field "gender" genderType (return . gender)
+    , Field "spouse" (NullableType personType) (return . spouse)
     ]
 
 petType :: SchemaType Pet
@@ -105,9 +101,9 @@ queryType =
   ObjectType
     "Query"
     []
-    [ Field "people" (NullableType (ListType personType)) getPeople,
-      Field "pets" (ListType petType) getPets,
-      Field "named" (InterfaceType namedInterface) getNamed
+    [ Field "people" (NullableType (ListType personType)) getPeople
+    , Field "pets" (ListType petType) getPets
+    , Field "named" (InterfaceType namedInterface) getNamed
     ]
 
 main :: IO ()

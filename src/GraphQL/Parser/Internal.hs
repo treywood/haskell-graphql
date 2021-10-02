@@ -39,6 +39,6 @@ queryParser = do
       space
       subQueries <- optional . try $ queryParser
       optional (char ',') >> space
-      return (Query field alias (fromMaybe [] subQueries))
+      return (Query field alias (fromMaybe [] subQueries)
   space >> char '}'
   return queries

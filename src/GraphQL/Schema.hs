@@ -4,6 +4,7 @@ module GraphQL.Schema
   ( SchemaType (..),
     Interface (..),
     Field (..),
+    queryType,
     printSchema,
   )
 where
@@ -27,6 +28,9 @@ data SchemaType a where
   ListType :: SchemaType a -> SchemaType [a]
   NullableType :: SchemaType a -> SchemaType (Maybe a)
   EnumType :: (Eq a, Show a) => String -> [a] -> SchemaType a
+
+queryType :: [Field ()] -> SchemaType ()
+queryType = ObjectType "Query" []
 
 data TypeBox where
   TypeBox :: SchemaType a -> TypeBox
