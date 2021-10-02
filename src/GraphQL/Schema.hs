@@ -8,9 +8,9 @@ module GraphQL.Schema
   )
 where
 
-import Data.List (intercalate)
+import           Data.List (intercalate)
 
-unique [] = []
+unique []       = []
 unique (x : xs) = x : unique (filter (/= x) xs)
 
 data Interface a
@@ -100,24 +100,12 @@ printSchema schema = intercalate "\n\n" allTypeStrings ++ "\n"
         TypeBox (ObjectType name interfaces fields) ->
           if name `elem` typeNames
             then types
-            else
-              schema :
-              concatMap
-                ( \(Field _ fieldType _) ->
-                    findTypes (TypeBox fieldType) [] (name : typeNames)
-                )
-                fields
+            else schema : objectTypes typeNames name fields
                 ++ map (TypeBox . InterfaceType) interfaces
         TypeBox (InterfaceType (Interface name fields)) ->
           if name `elem` typeNames
             then types
-            else
-              schema :
-              concatMap
-                ( \(Field _ fieldType _) ->
-                    findTypes (TypeBox fieldType) [] (name : typeNames)
-                )
-                fields
+            else schema : objectTypes typeNames name fields
         TypeBox (EnumType name _) ->
           if name `elem` typeNames
             then types
@@ -127,6 +115,10 @@ printSchema schema = intercalate "\n\n" allTypeStrings ++ "\n"
         TypeBox (NullableType innerType) ->
           findTypes (TypeBox innerType) types typeNames
         _ -> types
+    objectTypes :: [String] -> String -> [Field a] -> [TypeBox]
+    objectTypes typeNames name =
+      concatMap
+        (\(Field _ fieldType _) -> findTypes (TypeBox fieldType) [] (name : typeNames))
 
 data Field a where
   Field :: String -> SchemaType b -> (a -> IO b) -> Field a

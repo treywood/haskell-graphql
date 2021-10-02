@@ -1,13 +1,13 @@
 {-# LANGUAGE GADTs #-}
 
 module GraphQL.Core
-  ( runQuery,
-    Query (..),
+  ( runQuery
+  , Query (..)
   )
 where
 
-import Data.List (intercalate)
-import GraphQL.Schema
+import           Data.List      (intercalate)
+import           GraphQL.Schema
 
 data FieldValue
   = ObjectValue [(String, FieldValue)]
@@ -40,7 +40,7 @@ data Query
 
 fields :: SchemaType a -> [Field a]
 fields (ObjectType _ _ fs) = fs
-fields _ = []
+fields _                   = []
 
 fieldName :: Field a -> String
 fieldName (Field name _ _) = name
@@ -50,7 +50,7 @@ getQueryField (Query name _ _) = name
 
 getQueryName :: Query -> String
 getQueryName (Query _ (Just alias) _) = alias
-getQueryName (Query name Nothing _) = name
+getQueryName (Query name Nothing _)   = name
 
 getValue :: SchemaType a -> [Query] -> IO a -> IO FieldValue
 getValue StringType _ = fmap StringValue
