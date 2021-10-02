@@ -1,26 +1,28 @@
 module Main where
 
-import           Control.Monad  (forever)
-
-import           GraphQL.Core   (runQuery)
-import           GraphQL.Parser (parseQuery)
-import           GraphQL.Schema (Field (..), Interface (..), SchemaType (..),
-                                 printSchema)
-import           System.IO
-import           System.Random
+import Control.Monad (forever)
+import GraphQL.Core (runQuery)
+import GraphQL.Parser (parseQuery)
+import GraphQL.Schema
+  ( Field (..),
+    Interface (..),
+    SchemaType (..),
+    printSchema,
+  )
+import System.IO
+import System.Random
 
 data Gender
   = MALE
   | FEMALE
   deriving (Eq, Show)
 
-data Person =
-  Person
-    { name   :: String
-    , age    :: Int
-    , gender :: Gender
-    , spouse :: Maybe Person
-    }
+data Person = Person
+  { name :: String,
+    age :: Int,
+    gender :: Gender,
+    spouse :: Maybe Person
+  }
   deriving (Show)
 
 data Specie
@@ -28,8 +30,8 @@ data Specie
   | CAT
   deriving (Eq, Show, Read)
 
-data Pet =
-  Pet Specie String
+data Pet
+  = Pet Specie String
   deriving (Read, Show)
 
 class Named a where
@@ -47,7 +49,7 @@ instance Named Pet where
 
 instance Named NamedType where
   getName (NamedPerson p) = getName p
-  getName (NamedPet p)    = getName p
+  getName (NamedPet p) = getName p
 
 namedInterface :: (Named a) => Interface a
 namedInterface = Interface "Named" [Field "name" StringType (return . getName)]
@@ -61,9 +63,9 @@ personType =
   ObjectType
     "Person"
     [namedInterface]
-    [ Field "age" IntType (return . age)
-    , Field "gender" genderType (return . gender)
-    , Field "spouse" (NullableType personType) (return . spouse)
+    [ Field "age" IntType (return . age),
+      Field "gender" genderType (return . gender),
+      Field "spouse" (NullableType personType) (return . spouse)
     ]
 
 petType :: SchemaType Pet
@@ -87,7 +89,7 @@ getPeople () = do
   random <- (randomIO :: IO Float)
   return $
     if random > 0.5
-      then (Just [trey, debbie])
+      then Just [trey, debbie]
       else Nothing
 
 getNamed :: () -> IO NamedType
@@ -103,9 +105,9 @@ queryType =
   ObjectType
     "Query"
     []
-    [ Field "people" (NullableType (ListType personType)) getPeople
-    , Field "pets" (ListType petType) getPets
-    , Field "named" (InterfaceType namedInterface) getNamed
+    [ Field "people" (NullableType (ListType personType)) getPeople,
+      Field "pets" (ListType petType) getPets,
+      Field "named" (InterfaceType namedInterface) getNamed
     ]
 
 main :: IO ()
@@ -121,6 +123,6 @@ main = do
     case parseResult of
       Right query -> do
         result <- runQuery queryType query ()
-        putStrLn $ "Result: " ++ (show result)
+        putStrLn $ "Result: " ++ show result
         putStrLn ""
       Left err -> putStrLn err
