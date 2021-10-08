@@ -75,19 +75,16 @@ instance Show (SchemaType a) where
   show schemaType = typeName schemaType
 
 typeName :: SchemaType a -> String
-typeName (NullableType innerType) =
-  let rawName = typeName innerType
-   in take (length rawName - 1) rawName
-typeName (ObjectType name interfaces _) = requiredName name
-typeName (InterfaceType (Interface name _)) = requiredName name
-typeName (EnumType name _) = requiredName name
-typeName (ListType innerType) =
-  requiredName $ "[" ++ typeName innerType ++ "]"
-typeName StringType = requiredName "String"
 typeName BooleanType = requiredName "Boolean"
 typeName IntType = requiredName "Int"
+typeName StringType = requiredName "String"
 typeName FloatType = requiredName "Float"
 typeName IDType = requiredName "ID"
+typeName (ListType innerType) = requiredName $ "[" ++ typeName innerType ++ "]"
+typeName (EnumType name _) = requiredName name
+typeName (NullableType innerType) = init (typeName innerType)
+typeName (ObjectType name _ _) = requiredName name
+typeName (InterfaceType (Interface name _)) = requiredName name
 
 requiredName :: String -> String
 requiredName string = string ++ "!"

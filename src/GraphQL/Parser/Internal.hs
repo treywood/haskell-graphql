@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
 module GraphQL.Parser.Internal
   ( parseFieldAndAlias
   , parseJustField
@@ -33,12 +34,11 @@ parseJustField = do
 queryParser :: Parser [Query]
 queryParser = do
   char '{' >> space
-  queries <-
-    some $ do
-      (field, alias) <- parseFieldAndAlias <|> parseJustField
-      space
-      subQueries <- optional . try $ queryParser
-      optional (char ',') >> space
-      return (Query field alias (fromMaybe [] subQueries)
+  queries <- some $ do
+    (field, alias) <- parseFieldAndAlias <|> parseJustField
+    space
+    subQueries <- optional . try $ queryParser
+    optional (char ',') >> space
+    return $ Query field alias (subQueries ?: [])
   space >> char '}'
   return queries
