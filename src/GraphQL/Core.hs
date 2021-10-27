@@ -2,9 +2,8 @@
 
 module GraphQL.Core
   ( runQuery
-  , Query (..)
-  )
-where
+  , Query(..)
+  ) where
 
 import           Data.List      (intercalate)
 import           GraphQL.Schema
@@ -34,8 +33,8 @@ instance Show FieldValue where
         let kvs = map (\(k, v) -> "\"" ++ k ++ "\": " ++ show v) fs
          in intercalate ", " kvs
 
-data Query
-  = Query String (Maybe String) [Query]
+data Query =
+  Query String (Maybe String) [Query]
   deriving (Show, Eq)
 
 fields :: SchemaType a -> [Field a]
@@ -79,10 +78,6 @@ getMaybeValue (ObjectType _ interfaces fields) queries (Just ctx) =
 getMaybeValue schemaType queries (Just ctx) =
   fmap (MaybeValue . Just) (getValue schemaType queries (return ctx))
 
-runField :: Field a -> [Query] -> a -> IO FieldValue
-runField (Field _ fieldType fn) queries ctx =
-  getValue fieldType queries (fn ctx)
-
 runObjectFields :: [Interface a] -> [Field a] -> [Query] -> a -> IO FieldValue
 runObjectFields interfaces fields queries ctx = do
   let allFields = fields ++ concatMap (\(Interface _ fs) -> fs) interfaces
@@ -91,6 +86,10 @@ runObjectFields interfaces fields queries ctx = do
   let fieldNames = map (getQueryName . snd) fieldQueries
   fieldValues <- mapM (\(f, Query _ _ qs) -> runField f qs ctx) fieldQueries
   return $ ObjectValue (zip fieldNames fieldValues)
+  where
+    runField :: Field a -> [Query] -> a -> IO FieldValue
+    runField (Field _ fieldType fn) queries ctx =
+      getValue fieldType queries (fn ctx)
 
 runListFields :: [Interface a] -> [Field a] -> [Query] -> [a] -> IO FieldValue
 runListFields interfaces fields queries ctxs = do

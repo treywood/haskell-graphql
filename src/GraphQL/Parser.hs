@@ -1,8 +1,7 @@
 module GraphQL.Parser
   ( parseQuery
   , ParseResult
-  )
-where
+  ) where
 
 import           GraphQL.Core            (Query (..))
 import           GraphQL.Parser.Internal

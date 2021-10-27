@@ -13,12 +13,13 @@ data Gender
   | FEMALE
   deriving (Eq, Show)
 
-data Person = Person
-  { name   :: String,
-    age    :: Int,
-    gender :: Gender,
-    spouse :: Maybe Person
-  }
+data Person =
+  Person
+    { name   :: String
+    , age    :: Int
+    , gender :: Gender
+    , spouse :: Maybe Person
+    }
   deriving (Show)
 
 data Specie
@@ -26,8 +27,8 @@ data Specie
   | CAT
   deriving (Eq, Show, Read)
 
-data Pet
-  = Pet Specie String
+data Pet =
+  Pet Specie String
   deriving (Read, Show)
 
 class Named a where
