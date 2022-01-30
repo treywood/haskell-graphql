@@ -2,5 +2,5 @@
 .stack-work/
 .vscode/
 node_modules/
-haskell-graphql.cabal
+dist-newstyle/
 *~

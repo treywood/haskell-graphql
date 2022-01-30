@@ -27,9 +27,9 @@ instance Show FieldValue where
   show (BooleanValue b) = show b
   show (IDValue s) = "\"" ++ s ++ "\""
   show (ListValue xs) = show xs
-  show (ObjectValue fs) = "{ " ++ kvPairs fs ++ " }"
+  show (ObjectValue fs) = "{ " ++ kvPairs ++ " }"
     where
-      kvPairs fs =
+      kvPairs =
         let kvs = map (\(k, v) -> "\"" ++ k ++ "\": " ++ show v) fs
          in intercalate ", " kvs
 
