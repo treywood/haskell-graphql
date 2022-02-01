@@ -81,6 +81,7 @@ queryType =
     [ Field "people" (NullableType (ListType personType)) getPeople
     , Field "pets" (ListType petType) getPets
     , Field "named" (InterfaceType hasNameInterface) getNamed
+    , Field "number" IntType (\() -> return 1)
     ]
   where
     getPets :: () -> IO [Pet]
