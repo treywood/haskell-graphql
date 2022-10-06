@@ -50,7 +50,7 @@ instance Named NamedType where
 
 hasNameInterface :: (Named a) => Interface a
 hasNameInterface =
-  Interface "HasName" [Field "name" StringType (return . getName)]
+  Interface "HasName" [Field "name" StringType [] (return . getName)]
 
 genderType = EnumType "Gender" [MALE, FEMALE]
 
@@ -61,9 +61,9 @@ personType =
   ObjectType
     "Person"
     [hasNameInterface]
-    [ Field "age" IntType (return . age)
-    , Field "gender" genderType (return . gender)
-    , Field "spouse" (NullableType personType) (return . spouse)
+    [ Field "age" IntType [] (return . age)
+    , Field "gender" genderType [] (return . gender)
+    , Field "spouse" (NullableType personType) [] (return . spouse)
     ]
 
 petType :: SchemaType Pet
@@ -71,16 +71,16 @@ petType =
   ObjectType
     "Pet"
     [hasNameInterface]
-    [Field "specie" specieType (\(Pet specie _) -> return specie)]
+    [Field "specie" specieType [] (\(Pet specie _) -> return specie)]
 
 queryType :: SchemaType ()
 queryType =
   ObjectType
     "Query"
     []
-    [ Field "people" (NullableType (ListType personType)) getPeople
-    , Field "pets" (ListType petType) getPets
-    , Field "named" (InterfaceType hasNameInterface) getNamed
+    [ Field "people" (NullableType (ListType personType)) [] getPeople
+    , Field "pets" (ListType petType) [] getPets
+    , Field "named" (InterfaceType hasNameInterface) [] getNamed
     ]
   where
     getPets :: () -> IO [Pet]

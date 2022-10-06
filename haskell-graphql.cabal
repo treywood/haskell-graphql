@@ -70,6 +70,7 @@ test-suite haskell-graphql-test
       HUnit
     , base >=4.7 && <5
     , bytestring
+    , either
     , megaparsec
     , mtl
     , random

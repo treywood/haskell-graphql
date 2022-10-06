@@ -28,8 +28,19 @@ data SchemaType a where
   NullableType :: SchemaType a -> SchemaType (Maybe a)
   EnumType :: (Eq a, Show a) => String -> [a] -> SchemaType a
 
+data ArgumentType a where
+  StringArgumentType :: ArgumentType String
+  BooleanArgumentType :: ArgumentType Bool
+  IntArgumentType :: ArgumentType Int
+  FloatArgumentType :: ArgumentType Float
+  IDArgumentType :: ArgumentType String
+
+
 queryType :: [Field ()] -> SchemaType ()
 queryType = ObjectType "Query" []
+
+data Argument where
+  Argument :: String -> ArgumentType a -> Argument
 
 data TypeBox where
   TypeBox :: SchemaType a -> TypeBox
@@ -55,7 +66,7 @@ instance Show (SchemaType a) where
         intercalate
           "\n  "
           (map
-             (\(Field name fieldType _) -> name ++ ": " ++ typeName fieldType)
+             (\(Field name fieldType _ _) -> name ++ ": " ++ typeName fieldType)
              fields) ++
         "\n}"
   show (InterfaceType (Interface name fields)) =
@@ -65,7 +76,7 @@ instance Show (SchemaType a) where
     intercalate
       "\n  "
       (map
-         (\(Field name fieldType _) -> name ++ ": " ++ typeName fieldType)
+         (\(Field name fieldType _ _) -> name ++ ": " ++ typeName fieldType)
          fields) ++
     "\n}"
   show schemaType = typeName schemaType
@@ -116,8 +127,8 @@ printSchema schema = intercalate "\n\n" allTypeStrings ++ "\n"
     objectTypes :: [String] -> String -> [Field a] -> [TypeBox]
     objectTypes typeNames name =
       concatMap
-        (\(Field _ fieldType _) ->
+        (\(Field _ fieldType _ _) ->
            findTypes (TypeBox fieldType) [] (name : typeNames))
 
 data Field a where
-  Field :: String -> SchemaType b -> (a -> IO b) -> Field a
+  Field :: String -> SchemaType b -> [Argument] -> (a -> IO b) -> Field a
