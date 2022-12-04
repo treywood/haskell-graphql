@@ -1,20 +1,18 @@
-{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
+module GraphQL.Parser.Internal (
+  parseFieldAndAlias,
+  parseJustField,
+  ParseResult,
+  Parser,
+  queryParser,
+) where
 
-module GraphQL.Parser.Internal
-  ( parseFieldAndAlias
-  , parseJustField
-  , ParseResult
-  , Parser
-  , queryParser
-  ) where
+import GraphQL.Core (Query (..))
 
-import           GraphQL.Core         (Query (..))
-
-import           Data.Maybe
-import           Data.Void
-import           Relude.Monad.Maybe
-import           Text.Megaparsec
-import           Text.Megaparsec.Char
+import Data.Maybe
+import Data.Void
+import Relude.Monad.Maybe
+import Text.Megaparsec
+import Text.Megaparsec.Char
 
 type Parser = Parsec Void String
 

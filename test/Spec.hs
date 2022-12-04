@@ -1,19 +1,22 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-import           Test.HUnit
-import           Test.HUnit.Base
-import           Text.RawString.QQ
+import Test.HUnit
+import Test.HUnit.Base
+import Text.RawString.QQ
 
-import           GraphQL.Core
-import           GraphQL.Parser
-import           GraphQL.Parser.Internal
+import GraphQL.Core
+import GraphQL.Parser
+import GraphQL.Parser.Internal
 
 parserTestCases :: [(String, String, ParseResult [Query])]
 parserTestCases =
-  [ ( "Basic Query"
+  [
+    ( "Basic Query"
     , "{\n\tfield1\n\tfield2\n}"
-    , Right [Query "field1" Nothing [], Query "field2" Nothing []])
-  , ( "Nested Fields"
+    , Right [Query "field1" Nothing [], Query "field2" Nothing []]
+    )
+  ,
+    ( "Nested Fields"
     , "{ field1 { nested1, nested2 } field2 }"
     , Right
         [ Query
@@ -21,8 +24,10 @@ parserTestCases =
             Nothing
             [Query "nested1" Nothing [], Query "nested2" Nothing []]
         , Query "field2" Nothing []
-        ])
-  , ( "Alias Fields"
+        ]
+    )
+  ,
+    ( "Alias Fields"
     , "{ alias1: field1, alias2: field2 { nested1, nestedAlias: nested2 } }"
     , Right
         [ Query "field1" (Just "alias1") []
@@ -32,8 +37,10 @@ parserTestCases =
             [ Query "nested1" Nothing []
             , Query "nested2" (Just "nestedAlias") []
             ]
-        ])
-  , ( "Early End of Input"
+        ]
+    )
+  ,
+    ( "Early End of Input"
     , "{ field1 field2"
     , Left
         [r|1:16:
@@ -42,8 +49,10 @@ parserTestCases =
   |                ^
 unexpected end of input
 expecting ',', '{', '}', alphanumeric character, or white space
-|])
-  , ( "Bad Start"
+|]
+    )
+  ,
+    ( "Bad Start"
     , "nope"
     , Left
         [r|1:1:
@@ -52,8 +61,10 @@ expecting ',', '{', '}', alphanumeric character, or white space
   | ^
 unexpected 'n'
 expecting '{'
-|])
-  , ( "Empty String"
+|]
+    )
+  ,
+    ( "Empty String"
     , ""
     , Left
         [r|1:1:
@@ -62,7 +73,8 @@ expecting '{'
   | ^
 unexpected end of input
 expecting '{'
-|])
+|]
+    )
   ]
 
 parserTest :: (String, String, ParseResult [Query]) -> Test
