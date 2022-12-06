@@ -1,5 +1,5 @@
 module GraphQL.Parser (
-  parseQuery,
+    parseQuery,
 ) where
 
 import Data.Either.Combinators
